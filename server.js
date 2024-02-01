@@ -15,7 +15,7 @@ app.use(express.json());
 app.post('/query', async (req, res) => {
   try {
     const text = req.body.message;
-    
+   
 
     // Make a call to the OpenAI API and get the query embedding
 
@@ -38,8 +38,10 @@ app.post('/query', async (req, res) => {
       const completion = await openai.chat.completions.create({
         messages: [
           { role: "system", content: "You are a helpful assistant." },
+          // need to add in previous messages
+          ...req.body.messageList,
           { role: "user", content: text}
-          // need to add in previous user messages
+          
         ],
         model: "gpt-3.5-turbo",
       });

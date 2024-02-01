@@ -5,6 +5,7 @@ import { messageCard_bot, messageCard_user } from './components/message_cards';
 
 const ChatInterface = () => {
   const [message, setMessage] = useState<string>("");
+  const[messageList, setMessageList] = useState<Array<any>>([]);
   const [messageCards, setMessageCards] = useState<Array<any>>([]);
 
   const handleButtonClick = async () => {
@@ -15,13 +16,15 @@ const ChatInterface = () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        message: message
+        message: message,
+        messageList: messageList
       })
     })
 
     const bot_message = await response.text();
 
     setMessageCards([messageCard_bot(bot_message), messageCard_user(message), ...messageCards]);
+    setMessageList([...messageList, { role: "user", content: message}, { role: "assistant", content: bot_message}]);
     setMessage("");
   };
 
