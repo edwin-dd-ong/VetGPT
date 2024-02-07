@@ -10,22 +10,23 @@ const ChatInterface = () => {
 
   const handleButtonClick = async () => {
     //do rag on user message then update messageCards
+    let user_input = message;
+    setMessage("");
     const response = await fetch('http://localhost:3000/query', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        message: message,
+        message: user_input,
         messageList: messageList
       })
     })
 
     const bot_message = await response.text();
 
-    setMessageCards([messageCard_bot(bot_message), messageCard_user(message), ...messageCards]);
-    setMessageList([...messageList, { role: "user", content: message}, { role: "assistant", content: bot_message}]);
-    setMessage("");
+    setMessageCards([messageCard_bot(bot_message), messageCard_user(user_input), ...messageCards]);
+    setMessageList([...messageList, { role: "user", content: user_input}, { role: "assistant", content: bot_message}]);
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {

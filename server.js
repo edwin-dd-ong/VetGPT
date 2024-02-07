@@ -3,9 +3,9 @@ import express from "express";
 import cors from "cors";
 import { Pinecone } from '@pinecone-database/pinecone';
 
-const openai = new OpenAI({ apiKey: process.env['openai_api_key']  });
+const openai = new OpenAI({ apiKey: process.env['OPENAI_API_KEY']  });
 const pc = new Pinecone({
-  apiKey: process.env['pinecone_api_key'] 
+  apiKey: process.env['PINECONE_API_KEY'] 
 });
 const index = pc.index('vet-papers');
 
@@ -19,17 +19,18 @@ app.use(express.json());
 app.post('/query', async (req, res) => {
   try {
     const text = req.body.message;
-   
+    const messageList = req.body.messageList
+    const messageListString = messageList.map(message => message.content).join('\n');
+    console.log(messageListString); //this doesn't contain current msg
 
     // Make a call to the OpenAI API and get the query embedding
 
     async function get_query_embedding() {
       let embedding = await openai.embeddings.create({
         model: "text-embedding-3-small",
-        input: text,
+        input: messageListString,
         encoding_format: "float",
       })
-      console.log(embedding.data[0].embedding);
       return embedding.data[0].embedding;
     };
 
@@ -46,13 +47,15 @@ app.post('/query', async (req, res) => {
     
     // Combine with user query and call openAI chat completion endpoint
     async function get_bot_response() {
-      const extract = (a, b, c, d, e) => a + " " + b + " " + c + " " + d + " " + e 
+      const extract = (a, b, c, d, e) => `${a}\n${b}\n${c}\n${d}\n${e}`;
+      console.log(await query_pc_db());
+      console.log(extract(...(await query_pc_db())));
       const completion = await openai.chat.completions.create({
         messages: [
-          { role: "system", content: "You are a helpful assistant. Please make sure your answers are drawn from the following text, and cite the titles:" },
           { role: "system", content: extract(...(await query_pc_db()))},
+          { role: "system", content: "You are a helpful assistant. You are provided with the above documents to reference. Make sure that all your answers are based on the above documents, and that you list the titles of the texts you pulled from at the end of your answer" },
           // need to add in previous messages
-          ...req.body.messageList,
+          ...messageList,
           { role: "user", content: text}
           
         ],
